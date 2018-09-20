@@ -25,8 +25,8 @@ class IWAE:
     def _load_data(self):
         mnist = keras.datasets.mnist
         (self.train_images, _), (self.test_images, _) = mnist.load_data()
-        self.train_images = self.train_images/255.
-        self.test_images = self.test_images/255.
+        self.train_images = self.train_images / 255.
+        self.test_images = self.test_images / 255.
 
     def _encoder(self, x, z_dim=20, reuse=False):
         with tf.variable_scope("encoder", reuse=reuse):
@@ -42,17 +42,16 @@ class IWAE:
             l1 = tf.layers.dense(z, 200, activation=tf.nn.relu)
             l2 = tf.layers.dense(l1, 200, activation=tf.nn.relu)
             x_hat = tf.layers.dense(
-                l2, self.data_dim, activation=tf.nn.sigmoid)
+                l2, self.data_dim, activation=tf.nn.sigmoid)   
             return x_hat
 
     def _objective(self, z, mu, sigma, x, x_hat, training=True):
         log2pi = tf.log(2 * np.pi)
-        log_QzGx = (-(self.z_dim / 2) * log2pi
-                    + tf.reduce_sum(- tf.log(sigma) - 0.5 * tf.squared_difference(z, mu) / (2 * tf.square(sigma)), -1))
-        log_PxGz = tf.reduce_mean(tf.reduce_sum(
-            x * tf.log(x_hat + 1e-8) + (1 - x) * tf.log(1 - x_hat + 1e-8), [1]))
-        log_Pz = (-(self.z_dim / 2) * log2pi
-                  + tf.reduce_sum(- 0.5 * tf.squared_difference(z, 0) / 2, -1))
+        log_QzGx = (-(self.z_dim / 2) * log2pi + tf.reduce_sum(- tf.log(sigma) -
+                    0.5 * tf.squared_difference(z, mu) / (2 * tf.square(sigma)), -1))
+        log_PxGz = tf.reduce_mean(tf.reduce_sum(x * tf.log(x_hat + 1e-8) +
+                                                (1 - x) * tf.log(1 - x_hat + 1e-8), [1]))
+        log_Pz = (-(self.z_dim / 2) * log2pi + tf.reduce_sum(- 0.5 * tf.squared_difference(z, 0) / 2, -1))
         if training:
             log_weights = tf.reshape(
                 log_PxGz + log_Pz - log_QzGx, [self.k, self.batch_size])
@@ -85,7 +84,8 @@ class IWAE:
     def _build_test_graph(self):
         self.x_test = tf.placeholder(tf.float32, [1, self.data_dim])
         x_k_test = tf.tile(self.x_test, [self.test_k, 1])
-        mu_test, sigma_test = self._encoder(x_k_test, z_dim=self.z_dim, reuse=True)
+        mu_test, sigma_test = self._encoder(
+            x_k_test, z_dim=self.z_dim, reuse=True)
         z_test = mu_test + sigma_test * \
             tf.random_normal([self.test_k * 1, self.z_dim],
                              0, 1, dtype=tf.float32)
@@ -120,7 +120,8 @@ class IWAE:
         start_time = time.time()
         for stp in range(1, self.n_steps + 1):
             x_np = next(train_gen).reshape(self.batch_size, self.data_dim)
-            _, loss_np = self.sess.run([self.optim_op, self.loss], feed_dict={self.x: x_np})
+            _, loss_np = self.sess.run(
+                [self.optim_op, self.loss], feed_dict={self.x: x_np})
             if stp % 5000 == 0:
                 end_time = time.time()
                 print('Step: {:d} in {:.2f}s :: Loss: {:.3f}'.format(
