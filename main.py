@@ -1,6 +1,6 @@
 import argparse
 from iwae import IWAE
-
+import os
 
 def set_args(parser):
     parser.add_argument('--batch_size', type=int,
@@ -13,6 +13,8 @@ def set_args(parser):
                         help='numbers of particles to use for training')
     parser.add_argument('--test_k', type=int, default=5000,
                         help='numbers of particles to use for testing')
+    parser.add_argument('--gpu', type=str, default='0',
+                        help='gpu device id')
     return parser
 
 
@@ -21,6 +23,7 @@ if __name__ == '__main__':
     parser = set_args(parser)
     args = parser.parse_args()
     print(args)
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     model = IWAE(batch_size=args.batch_size, z_dim=args.z_dim,
                  k=args.k, test_k=args.test_k, n_steps=args.n_steps)
     model.train()
