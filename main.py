@@ -2,7 +2,10 @@ import argparse
 from iwae import IWAE
 import os
 
+
 def set_args(parser):
+    parser.add_argument('--dataset', type=str, default='mnist',
+                        choices=['mnist', 'omniglot'])
     parser.add_argument('--batch_size', type=int,
                         default=100, help='input batch size')
     parser.add_argument('--z_dim', type=int, default=50,
@@ -24,7 +27,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    model = IWAE(batch_size=args.batch_size, z_dim=args.z_dim,
+    model = IWAE(dataset=args.dataset, batch_size=args.batch_size, z_dim=args.z_dim,
                  k=args.k, test_k=args.test_k, n_steps=args.n_steps)
     model.train()
     print('IWAE Bound:', model.compute_test_loss())

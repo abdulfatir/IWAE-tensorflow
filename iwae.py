@@ -1,12 +1,14 @@
+import time
+import pickle
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import time
 from tensorflow import keras
 
 
 class IWAE:
-    def __init__(self, z_dim=50, k=5, test_k=5000, n_steps=200000, batch_size=100):
+    def __init__(self, dataset='mnist', z_dim=50, k=5, test_k=5000, n_steps=200000, batch_size=100):
+        self.dataset = dataset
         self.z_dim = z_dim
         self.k = k
         self.test_k = test_k
@@ -23,10 +25,19 @@ class IWAE:
         self._load_data()
 
     def _load_data(self):
-        mnist = keras.datasets.mnist
-        (self.train_images, _), (self.test_images, _) = mnist.load_data()
-        self.train_images = self.train_images / 255.
-        self.test_images = self.test_images / 255.
+        if self.dataset == 'mnist':
+            mnist = keras.datasets.mnist
+            (self.train_images, _), (self.test_images, _) = mnist.load_data()
+            self.train_images = self.train_images / 255.
+            self.test_images = self.test_images / 255.
+        elif self.dataset == 'omniglot':
+            with open('data/omniglot/data.pkl', 'rb') as pkl:
+                data = pickle.load(pkl)
+            self.train_images = data['data'].T
+            self.test_images = data['testdata'].T
+        else:
+            raise ValueError('Unknown dataset %s' % self.dataset)
+            exit()
 
     def _encoder(self, x, z_dim=20, reuse=False):
         with tf.variable_scope("encoder", reuse=reuse):
@@ -42,7 +53,7 @@ class IWAE:
             l1 = tf.layers.dense(z, 200, activation=tf.nn.relu)
             l2 = tf.layers.dense(l1, 200, activation=tf.nn.relu)
             x_hat = tf.layers.dense(
-                l2, self.data_dim, activation=tf.nn.sigmoid)   
+                l2, self.data_dim, activation=tf.nn.sigmoid)
             return x_hat
 
     def _objective(self, z, mu, sigma, x, x_hat, training=True):
